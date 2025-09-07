@@ -21,7 +21,7 @@ namespace SorenShell {
 			User& operator=(User&&) = delete;
 
 			//methods
-			void logIn(const std::string &password) const;
+			bool logIn(const std::string &password) const;
 			void logOut() const;
 
 			//getter
@@ -64,16 +64,22 @@ namespace SorenShell {
 			bool addUser(std::string name, gid_t gid, const std::string &password, bool is_admin = false);
 			bool deleteUser(uid_t uid);
 			bool existsUser(uid_t uid) const;
+			bool changeUser(uid_t uid, const std::string &password);
 			uid_t getUid(const std::string &user_name) const;
+			uid_t getUid() const; //返回当前的用户UID
+			uid_t getDefaultUid() const;
+			bool setDefaultUid(uid_t uid);
 
 			enum {
-				nuid = 100000
+				nuid = 100000 //not uid
 			};
 		private:
 			UserManager();
 			void loadUsers(const std::string &file_name);
 			void saveAsFile(const std::string &file_name) const;
 			std::unordered_map<uid_t, std::shared_ptr<User>> user_db_;
+			uid_t current_uid_ = nuid;
+			uid_t default_uid_ = nuid;
 			std::string config_file_name_ = "../config/user.yaml";
 			uid_t highest_uid_ = 0;
 	};

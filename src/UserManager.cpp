@@ -25,12 +25,13 @@ namespace SorenShell {
 
 	User::~User() = default;
 
-	void User::logIn(const std::string &password) const {
+	bool User::logIn(const std::string &password) const {
 		if (!verifyPassword(password)) {
 			std::cerr << "Wrong password!" << std::endl;
-			return;
+			return false;
 		}
 		is_logged_in_ = true;
+		return true;
 	}
 
 	void User::logOut() const {
@@ -93,6 +94,7 @@ namespace SorenShell {
 	}
 
 	UserManager::~UserManager() {
+		user_db_[current_uid_]->logOut();
 		saveAsFile(config_file_name_);
 	}
 
@@ -129,6 +131,15 @@ namespace SorenShell {
 		return user_db_.contains(uid);
 	}
 
+	bool UserManager::changeUser(const uid_t uid, const std::string &password) {
+		auto new_user = user_db_.find(uid);
+		if (new_user == user_db_.end()) {
+			return false;
+		}
+		user_db_.at(current_uid_)->logOut();
+		return user_db_.at(uid)->logIn(password);
+	}
+
 	uid_t UserManager::getUid(const std::string &user_name) const {
 		for (const auto &[uid, user] : user_db_) {
 			if (user->userName() == user_name) {
@@ -138,10 +149,31 @@ namespace SorenShell {
 		return nuid;
 	}
 
+	uid_t UserManager::getUid() const {
+		return current_uid_;
+	}
+
+	uid_t UserManager::getDefaultUid() const {
+		return default_uid_;
+	}
+
+	bool UserManager::setDefaultUid(uid_t uid) {
+		if (existsUser(uid)) {
+			default_uid_ = uid;
+			return true;
+		}
+		return false;
+	}
+
 	UserManager::UserManager() {
 		loadUsers(this->config_file_name_);
 		for (const auto &[uid, user] : user_db_) {
 			highest_uid_ = std::max(highest_uid_, uid);
+		}
+		const auto user = user_db_[getUid("musheng")];
+		current_uid_ = user->userId();
+		if (!user->logIn("musheng685")) {
+			current_uid_ = nuid;
 		}
 	}
 
@@ -150,16 +182,24 @@ namespace SorenShell {
 		for (auto it = config.begin(); it != config.end(); ++it) {
 			uid_t uid = nuid;
 			std::shared_ptr<User> user;
-			if (it->first.as<int>()) {
-				uid = it->first.as<uid_t>();
-				user = std::make_shared<User>(
-					it->second["user_name"].as<std::string>(),
-					it->second["uid"].as<uid_t>(),
-					it->second["gid"].as<gid_t>(),
-					it->second["password"].as<std::string>(),
-					it->second["is_admin"].as<bool>()
-				);
+			try {
+				if (it->first.as<int>() != nuid) {
+					uid = it->first.as<uid_t>();
+					user = std::make_shared<User>(
+						it->second["user_name"].as<std::string>(),
+						it->second["uid"].as<uid_t>(),
+						it->second["gid"].as<gid_t>(),
+						it->second["password"].as<std::string>(),
+						it->second["is_admin"].as<bool>()
+					);
+				}
 			}
+			catch (const YAML::Exception &e) {
+				if (it->first.as<std::string>() == "default_user") {
+					default_uid_ = it->second["uid"].as<uid_t>();
+				}
+			}
+
 			if (uid != nuid) {
 				user_db_.emplace(uid, std::move(user));
 			}
@@ -178,6 +218,10 @@ namespace SorenShell {
 
 			config[user->userId()] = node;
 		}
+		YAML::Node default_user;
+		default_user["uid"] = default_uid_;
+		config["default_user"] = default_user;
+
 		std::ofstream out(config_file_name_, std::ofstream::trunc | std::ofstream::out);
 		if (!out.is_open()) {
 			std::cerr << "Can't open config file" << std::endl;
