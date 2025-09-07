@@ -6,6 +6,10 @@
 #define SORENSHELL_TERMINAL_HPP
 
 #include <string>
+#include <vector>
+
+#include "HardwareManager.hpp"
+#include "UserManager.hpp"
 
 namespace SorenShell {
 	class Terminal {
@@ -13,19 +17,26 @@ namespace SorenShell {
 			Terminal();
 			~Terminal();
 			int start();
-			int execute(const std::string &command);
 			int stop();
+			[[nodiscard]] bool isRunning() const;
 
-			enum {
-				RET_RUNNING = 99,
-				RET_EXIT_SUCCESS = 0,
-			};
+
 
 		private:
+			using args_t = std::vector<std::string>;
+
 			bool is_running_ = false;
-			std::string user_name_;
-			std::string current_dir_;
-			std::string device_name_;
+			UserManager &user_manager_;
+			HardwareManager &hardware_manager_;
+			std::string current_dir_ = "~";
+			std::string command_;
+			args_t args_;
+
+			[[nodiscard]] int execute() const;
+			int run();
+			int readCommand();
+
+			void parseCommand(const std::string &command);
 	};
 } // SorenShell
 

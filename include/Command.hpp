@@ -10,13 +10,9 @@
 namespace SorenShell {
 	class Command {
 		public:
-			explicit Command(std::string command, const std::vector<std::string> &args = {});
+			Command();
 			virtual ~Command();
-			virtual int execute() = 0;
-
-		protected:
-			std::string command_;
-			std::vector<std::string> args_;
+			virtual int execute(std::vector<std::string> args) = 0;
 	};
 } // SorenShell
 
