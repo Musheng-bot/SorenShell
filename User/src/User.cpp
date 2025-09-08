@@ -1,97 +1,106 @@
-//
-// Created by musheng on 9/8/25.
-//
-
 #include "User.hpp"
-#include <string>
+
 #include <iostream>
 #include <pwd.h>
-#include <openssl/sha.h>
-#include <sstream>
-#include <iomanip>
-#include <utility>
-#include <yaml-cpp/yaml.h>
-#include <fstream>
-
+#include <unistd.h>
+#include <sys/wait.h>
 
 namespace SorenShell {
-	User::User(std::string name, const uid_t uid, const gid_t gid, std::string hash_password, bool is_admin) :
-		user_name_(std::move(name)),
-		user_id_(uid),
-		group_id_(gid),
-		is_admin_(is_admin),
-		is_logged_in_(false),
-		hash_password_(std::move(hash_password)) {
+	uid_t User::getUid() {
+		return getuid();
 	}
 
-	User::~User() = default;
+	gid_t User::getGid() {
+		return getGid(getUid());
+	}
 
-	bool User::logIn(const std::string &password) const {
-		if (!verifyPassword(password)) {
-			std::cerr << "Wrong password!" << std::endl;
-			return false;
+	std::string User::getHomeDirectory() {
+		return getHomeDirectory(getUid());
+	}
+
+	std::string User::getUserName(uid_t uid) {
+		const auto pwd = getpwuid(uid);
+		if (pwd == nullptr) {
+			return "";
 		}
-		is_logged_in_ = true;
-		return true;
+		return {pwd->pw_name};
 	}
 
-	void User::logOut() const {
-		is_logged_in_ = false;
-	}
-
-	const std::string & User::userName() const {
-		return user_name_;
-	}
-
-	uid_t User::userId() const {
-		return user_id_;
-	}
-
-	gid_t User::groupId() const {
-		return group_id_;
-	}
-
-	bool User::isAdmin() const {
-		return is_admin_;
-	}
-
-	bool User::isLoggedIn() const {
-		return is_logged_in_;
-	}
-
-	const std::string &User::hashPassword() const {
-		return hash_password_;
-	}
-
-	bool User::setUserName(const std::string &name) {
-		this->user_name_ = name;
-		return true;
-	}
-
-	bool User::setGroupId(gid_t gid) {
-		this->group_id_ = gid;
-		return true;
-	}
-
-	bool User::changePassword(const std::string &new_password) {
-		this->hash_password_ = hashPassword(new_password);
-		return true;
-	}
-
-	std::string User::hashPassword(const std::string &password) {
-		unsigned char hash[SHA256_DIGEST_LENGTH];
-		SHA256(reinterpret_cast<const unsigned char*>(password.c_str()),
-			   password.size(), hash);
-
-		std::stringstream ss;
-		for (const unsigned char i : hash) {
-			ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(i);
+	std::string User::getHomeDirectory(uid_t uid) {
+		const auto pwd = getpwuid(getUid());
+		if (pwd == nullptr) {
+			return "";
 		}
-		return ss.str();
+		return {pwd->pw_dir};
 	}
 
-	bool User::verifyPassword(const std::string &password) const {
-		return hash_password_ == hashPassword(password);
+	gid_t User::getGid(gid_t uid) {
+		auto pwd = getpwuid(uid);
+		if (pwd == nullptr) {
+			return -1;
+		}
+		return pwd->pw_gid;
 	}
 
-} // SorenShell
+	void User::runTaskAsUser(std::function<void()> task, const std::string& user) {
+		auto pwd = getpwnam(user.c_str());
+		if (pwd == nullptr) {
+			std::cout << "User " << user << " does not exist" << std::endl;
+			return;
+		}
+		std::cout << "User " << getpwuid(getUid())->pw_name << " is switching to user " << pwd->pw_name << std::endl;
+		pid_t pid = fork();
+		if (pid == -1) {
+			std::cout << "Error when creating process!" << std::endl;
+			return;
+		}
+		if (pid == 0) {
+			// 先切换组ID，再切换用户ID（顺序很重要）
+			if (setgid(pwd->pw_gid) == -1) {
+				std::cout << "Error when switching group!" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (setuid(pwd->pw_uid) == -1) {
+				std::cout << "Error when switching user!" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			// 验证切换是否成功
+			if (geteuid() != pwd->pw_uid) {
+				std::cout << "Error when switching user!" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			task();
+			exit(EXIT_SUCCESS);
+		}
+		int status;
+		waitpid(pid, &status, 0);
+		if (status == EXIT_FAILURE) {
+			std::cout << "Something went wrong when switching user! Please retry!" << std::endl;
+		}
+		else if (status == EXIT_SUCCESS) {
+			std::cout << "Successfully when switching user!" << std::endl;
+		}
+	}
+
+
+	bool User::setUid(uid_t uid) {
+		bool ret = setuid(uid) != -1;
+		if (!ret) {
+			std::cout << "Failed to set user id: " << uid << std::endl;
+		}
+		return ret;
+	}
+
+	bool User::changeUserName(uid_t uid, const std::string &userName) {
+		//... not inplemented
+		return false;
+	}
+
+	std::string User::getUserName() {
+		return getUserName(getUid());
+	}
+
+
+}

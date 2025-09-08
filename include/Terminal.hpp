@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "../Hardware/include/HardwareManager.hpp"
-#include "../User/include/UserManager.hpp"
+#include "../User/include/User.hpp"
 
 namespace SorenShell {
 	class Terminal {
@@ -26,11 +26,6 @@ namespace SorenShell {
 			using args_t = std::vector<std::string>;
 
 			bool is_running_ = false;
-			UserManager &user_manager_;
-			HardwareManager &hardware_manager_;
-			std::string current_dir_ = "/home/musheng";
-			std::string command_;
-			args_t args_;
 
 			[[nodiscard]] int execute() const;
 			int run();

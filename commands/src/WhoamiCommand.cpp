@@ -7,7 +7,7 @@
 #include <iostream>
 
 #include "Base.hpp"
-#include "../../User/include/UserManager.hpp"
+#include "../../User/include/User.hpp"
 
 namespace SorenShell {
 	int WhoamiCommand::execute(std::vector<std::string> args) {

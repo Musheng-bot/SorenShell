@@ -6,7 +6,7 @@
 
 #include <utility>
 
-#include "../../User/include/UserManager.hpp"
+#include "../../User/include/User.hpp"
 
 namespace SorenShell {
 	BaseFile::BaseFile(int inode, std::string absolute_path, bool is_hidden, uid_t owner_uid) :

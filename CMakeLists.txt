@@ -7,10 +7,8 @@ find_package(yaml-cpp REQUIRED)
 
 ### UserManagement模块
 add_library(UserManagement SHARED
-		User/include/UserManager.hpp
-		User/src/UserManager.cpp
-		User/src/User.cpp
 		User/include/User.hpp
+		User/src/User.cpp
 )
 target_include_directories(UserManagement
 		PRIVATE include /usr/local/include User/include)
