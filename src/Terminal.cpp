@@ -3,7 +3,7 @@
 //
 
 #include "Terminal.hpp"
-#include "CommandFactory.hpp"
+#include "../commands/include/CommandFactory.hpp"
 #include "Base.hpp"
 #include <iostream>
 #include <sstream>
@@ -27,6 +27,10 @@ namespace SorenShell {
 
 	int Terminal::execute() const {
 		auto command = CommandFactory::create(command_);
+		if (command == nullptr) {
+			std::cout << "Command not found" << std::endl;
+			return RET_COMMAND_NOT_FOUND;
+		}
 		return command->execute(args_);
 	}
 
@@ -85,6 +89,17 @@ namespace SorenShell {
 			}
 			else {
 				args_.push_back(token);
+			}
+		}
+		if (command_ == "ls") {
+			bool found = false;
+			for (auto &arg : args_) {
+				if (arg[0] != '-') {
+					found = true;
+				}
+			}
+			if (!found) {
+				args_.emplace_back(current_dir_);
 			}
 		}
 	}

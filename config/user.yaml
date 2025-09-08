@@ -1,14 +1,14 @@
-1:
-  user_name: Soren
-  uid: 1
-  gid: 0
-  password: b3ec5bdf68377c3c1bcb2edc7bb44000e0ace9bf808ed9d665b6e06a17104a67
-  is_admin: false
 0:
   user_name: musheng
   uid: 0
   gid: 0
   password: 028d0e653f9e19ae0e91724b2f21770844b4be69809f1425df7f321f9428da6a
   is_admin: true
+1:
+  user_name: Soren
+  uid: 1
+  gid: 0
+  password: b3ec5bdf68377c3c1bcb2edc7bb44000e0ace9bf808ed9d665b6e06a17104a67
+  is_admin: false
 default_user:
   uid: 0

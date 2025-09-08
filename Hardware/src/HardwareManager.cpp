@@ -2,7 +2,7 @@
 // Created by musheng on 9/7/25.
 //
 
-#include "HardwareManager.hpp"
+#include "../include/HardwareManager.hpp"
 
 #include <fstream>
 

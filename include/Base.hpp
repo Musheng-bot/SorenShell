@@ -8,12 +8,14 @@
 #include <csignal>
 namespace SorenShell {
 	enum ReturnCode {
-		RET_RUNNING = 99,
 		RET_EXIT_SUCCESS = 0,
-		RET_EXIT_FAILURE = 1,
-		RET_PLEASE_STOP = 2,
-		RET_COMMAND_NOT_FOUND = 3,
-		RET_COMMAND_TOO_LONG = 4,
+		RET_EXECUTION_FAILURE = 1,
+		RET_COMMAND_NOT_FOUND = 2,
+		RET_PERMISSION_DENIED = 3,
+		RET_RANGE_ERROR = 4,
+		RET_OUT_OF_MEMORY = 5,
+		RET_ARGUMENT_ERROR = 6,
+		RET_OK = 7,
 	};
 	constexpr int MAX_COMMAND_LENGTH = 100;
 	// inline volatile sig_atomic_t exit_status = 0;

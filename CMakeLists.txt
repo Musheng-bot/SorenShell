@@ -7,31 +7,35 @@ find_package(yaml-cpp REQUIRED)
 
 ### UserManagement模块
 add_library(UserManagement SHARED
-		include/UserManager.hpp
-		src/UserManager.cpp
+		User/include/UserManager.hpp
+		User/src/UserManager.cpp
+		User/src/User.cpp
+		User/include/User.hpp
 )
 target_include_directories(UserManagement
-		PRIVATE include /usr/local/include)
+		PRIVATE include /usr/local/include User/include)
 target_link_libraries(UserManagement PRIVATE
 		OpenSSL::Crypto yaml-cpp
 )
 
 ### HardwareManagement模块
 add_library(HardwareManagement SHARED
-	include/HardwareManager.hpp
-	src/HardwareManager.cpp
+		Hardware/include/HardwareManager.hpp
+		Hardware/src/HardwareManager.cpp
 )
 target_include_directories(HardwareManagement PUBLIC include)
 
 ### Commands module
 file(GLOB COMMAND_HEADERS
-	include/Command.hpp include/CommandFactory.hpp commands/include/*.hpp
+		commands/include/Command.hpp commands/include/CommandFactory.hpp commands/include/*.hpp
 )
 file(GLOB COMMAND_SOURCES
-	src/Command.cpp src/CommandFactory.cpp commands/src/*.cpp
+		commands/src/Command.cpp commands/src/CommandFactory.cpp commands/src/*.cpp
 )
 add_library(Commands SHARED
 	${COMMAND_HEADERS} ${COMMAND_SOURCES}
+		commands/src/LsCommand.cpp
+		commands/include/LsCommand.hpp
 )
 target_include_directories(Commands PRIVATE include commands/include)
 
@@ -45,12 +49,14 @@ target_link_libraries(Terminal PUBLIC HardwareManagement UserManagement Commands
 
 ### FileSystem module
 add_library(FileSystem SHARED
-	include/File.hpp
-	src/File.cpp
-	include/Directory.hpp
-	src/Directory.cpp
-	src/BaseFile.cpp
-	include/BaseFile.hpp
+		FileSystem/include/File.hpp
+		FileSystem/src/File.cpp
+		FileSystem/include/Directory.hpp
+		FileSystem/src/Directory.cpp
+		FileSystem/src/BaseFile.cpp
+		FileSystem/include/BaseFile.hpp
+		FileSystem/src/FileSystem.cpp
+		FileSystem/include/FileSystem.hpp
 )
 target_include_directories(FileSystem PUBLIC include)
 
@@ -78,6 +84,5 @@ target_link_libraries(test
 		HardwareManagement
 		Terminal
 		Commands
-		FileSystem
 )
 

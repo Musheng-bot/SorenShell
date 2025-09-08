@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 
-#include "HardwareManager.hpp"
-#include "UserManager.hpp"
+#include "../Hardware/include/HardwareManager.hpp"
+#include "../User/include/UserManager.hpp"
 
 namespace SorenShell {
 	class Terminal {
@@ -28,7 +28,7 @@ namespace SorenShell {
 			bool is_running_ = false;
 			UserManager &user_manager_;
 			HardwareManager &hardware_manager_;
-			std::string current_dir_ = "~";
+			std::string current_dir_ = "/home/musheng";
 			std::string command_;
 			args_t args_;
 
