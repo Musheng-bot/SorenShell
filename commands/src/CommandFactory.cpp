@@ -6,6 +6,7 @@
 
 #include <map>
 
+#include "CdCommand.hpp"
 #include "ExitCommand.hpp"
 #include "EchoCommand.hpp"
 #include "LsCommand.hpp"
@@ -13,8 +14,8 @@
 
 namespace SorenShell {
 	template<typename T>
-	std::unique_ptr<T> commandFunc(const std::vector<std::string> &args) {
-		return std::make_unique<T>(args);
+	std::unique_ptr<T> commandFunc(const std::vector<std::string> &args, Terminal &terminal) {
+		return std::make_unique<T>(args, terminal);
 	}
 
 	CommandFactory::CommandFactory() {
@@ -22,6 +23,7 @@ namespace SorenShell {
 		registerCommand("echo", commandFunc<EchoCommand>);
 		registerCommand("ls", commandFunc<LsCommand>);
 		registerCommand("whoami", commandFunc<WhoamiCommand>);
+		registerCommand("cd", commandFunc<CdCommand>);
 	}
 
 	CommandFactory &CommandFactory::getInstance() {
@@ -31,9 +33,9 @@ namespace SorenShell {
 
 	CommandFactory::~CommandFactory() = default;
 
-	std::unique_ptr<Command> CommandFactory::create(const std::string &command, const std::vector<std::string>& args) {
+	std::unique_ptr<Command> CommandFactory::create(const std::string &command, const std::vector<std::string>& args, Terminal &terminal) {
 		if (commands_.contains(command)) {
-			return commands_[command](args);
+			return commands_[command](args, terminal);
 		}
 		return nullptr;
 	}

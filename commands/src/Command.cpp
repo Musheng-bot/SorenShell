@@ -7,8 +7,9 @@
 #include <utility>
 
 namespace SorenShell {
-	Command::Command(const std::vector<std::string> &args) :
-		args_(args) {
+	Command::Command(const std::vector<std::string> &args, Terminal &terminal):
+		args_(args) ,
+		terminal_(terminal){
 
 	}
 

@@ -15,9 +15,10 @@
 namespace SorenShell {
 
 	Terminal::Terminal() :
-		current_working_directory_(User::getHomeDirectory()),
-		command_factory_(CommandFactory::getInstance())
-	{}
+		current_working_directory_(User::getHomeDirectory()) ,
+		command_factory_(CommandFactory::getInstance()){
+
+	}
 
 	Terminal::~Terminal() = default;
 
@@ -27,7 +28,7 @@ namespace SorenShell {
 	}
 
 	int Terminal::execute() {
-		command_ = command_factory_.create(command_str_, args_);
+		command_ = command_factory_.create(command_str_, args_, *this);
 		if (command_ == nullptr) {
 			std::cout << "Command not found" << std::endl;
 			return RET_COMMAND_NOT_FOUND;
@@ -118,5 +119,9 @@ namespace SorenShell {
 
 	bool Terminal::isRunning() const {
 		return is_running_;
+	}
+
+	void Terminal::changeWorkingDirectory(const std::string &new_dir) {
+		current_working_directory_ = new_dir;
 	}
 } // SorenShell

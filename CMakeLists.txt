@@ -24,16 +24,12 @@ add_library(HardwareManagement SHARED
 target_include_directories(HardwareManagement PUBLIC include)
 
 ### Commands module
-file(GLOB COMMAND_HEADERS
-		commands/include/Command.hpp commands/include/CommandFactory.hpp commands/include/*.hpp
+file(GLOB COMMAND_HEADERS commands/include/*.hpp
 )
-file(GLOB COMMAND_SOURCES
-		commands/src/Command.cpp commands/src/CommandFactory.cpp commands/src/*.cpp
+file(GLOB COMMAND_SOURCES commands/src/*.cpp
 )
 add_library(Commands SHARED
 	${COMMAND_HEADERS} ${COMMAND_SOURCES}
-		commands/src/LsCommand.cpp
-		commands/include/LsCommand.hpp
 )
 target_include_directories(Commands PRIVATE
 		include

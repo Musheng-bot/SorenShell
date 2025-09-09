@@ -7,7 +7,6 @@
 
 #include <string>
 #include <vector>
-
 #include "CommandFactory.hpp"
 
 namespace SorenShell {
@@ -19,6 +18,7 @@ namespace SorenShell {
 
 			void stop();
 			[[nodiscard]] bool isRunning() const;
+			void changeWorkingDirectory(const std::string &new_dir);
 
 		private:
 			using args_t = std::vector<std::string>;

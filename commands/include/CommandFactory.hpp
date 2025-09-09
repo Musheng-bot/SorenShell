@@ -5,7 +5,7 @@
 #ifndef SORENSHELL_COMMANDFACTORY_HPP
 #define SORENSHELL_COMMANDFACTORY_HPP
 
-#include <Command.hpp>
+#include "Command.hpp"
 #include <functional>
 #include <map>
 #include <memory>
@@ -13,11 +13,11 @@
 namespace SorenShell {
 	class CommandFactory {
 		public:
-			using Function = std::function<std::unique_ptr<Command>(const std::vector<std::string> &)>;
+			using Function = std::function<std::unique_ptr<Command>(const std::vector<std::string> &, Terminal&)>;
 
 			static CommandFactory &getInstance();
 			~CommandFactory();
-			std::unique_ptr<Command> create(const std::string &command, const std::vector<std::string> &args);
+			std::unique_ptr<Command> create(const std::string &command, const std::vector<std::string> &args, Terminal &terminal);
 			void registerCommand(const std::string& command, const Function& function);
 
 		private:

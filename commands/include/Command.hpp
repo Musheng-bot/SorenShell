@@ -8,9 +8,11 @@
 #include <vector>
 
 namespace SorenShell {
+	class Terminal;
+
 	class Command {
 		public:
-			explicit Command(const std::vector<std::string> &args);
+			explicit Command(const std::vector<std::string> &args, Terminal &terminal);
 			virtual ~Command();
 			virtual int execute() = 0;
 			virtual void preprocess(const std::string &current_path) = 0;
@@ -21,13 +23,14 @@ namespace SorenShell {
 			std::string command_;
 			std::vector<std::string> args_;
 			bool help_ = false;
+			Terminal &terminal_;
 	};
 } // SorenShell
 
 #define DEFINE_COMMAND_CLASS(CLASS_NAME) \
 	public:\
-		explicit CLASS_NAME(const std::vector<std::string> &args) :\
-			Command(args){}\
+		explicit CLASS_NAME(const std::vector<std::string> &args, Terminal &terminal) :\
+			Command(args, terminal){}\
 		~CLASS_NAME() = default;\
 		int execute() override;\
 		void preprocess(const std::string &current_path) override;\
