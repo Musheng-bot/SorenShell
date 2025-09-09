@@ -8,8 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "../Hardware/include/HardwareManager.hpp"
-#include "../User/include/User.hpp"
+#include "CommandFactory.hpp"
 
 namespace SorenShell {
 	class Terminal {
@@ -17,21 +16,25 @@ namespace SorenShell {
 			Terminal();
 			~Terminal();
 			int start();
-			int stop();
+
+			void stop();
 			[[nodiscard]] bool isRunning() const;
-
-
 
 		private:
 			using args_t = std::vector<std::string>;
-
+			std::string current_working_directory_;
 			bool is_running_ = false;
+			std::string command_str_;
+			std::unique_ptr<Command> command_;
+			args_t args_;
+			CommandFactory &command_factory_;
 
-			[[nodiscard]] int execute() const;
+			[[nodiscard]] int execute();
 			int run();
 			int readCommand();
 
 			void parseCommand(const std::string &command);
+			void handleReturnCode(int res);
 	};
 } // SorenShell
 

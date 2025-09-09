@@ -7,11 +7,8 @@
 #include "Command.hpp"
 
 namespace SorenShell {
-	class ExitCommand : public Command {
-		public:
-			ExitCommand() = default;
-			~ExitCommand() override = default;
-			int execute(std::vector<std::string> args) override;
+	class ExitCommand final : public Command {
+		DEFINE_COMMAND_CLASS(ExitCommand)
 	};
 } // SorenShell
 

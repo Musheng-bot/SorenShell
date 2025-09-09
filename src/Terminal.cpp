@@ -3,59 +3,63 @@
 //
 
 #include "Terminal.hpp"
-#include "../commands/include/CommandFactory.hpp"
+#include "CommandFactory.hpp"
 #include "Base.hpp"
 #include <iostream>
 #include <sstream>
+#include <sys/wait.h>
+
+#include "HardwareManager.hpp"
+#include "User.hpp"
 
 namespace SorenShell {
 
 	Terminal::Terminal() :
-		user_manager_(UserManager::getInstance()),
-		hardware_manager_(HardwareManager::getInstance()) {
-	}
+		current_working_directory_(User::getHomeDirectory()),
+		command_factory_(CommandFactory::getInstance())
+	{}
 
 	Terminal::~Terminal() = default;
 
 	int Terminal::start() {
-		if (is_running_) {
-			return RET_RUNNING;
-		}
 		is_running_ = true;
 		return run();
 	}
 
-	int Terminal::execute() const {
-		auto command = CommandFactory::create(command_);
-		if (command == nullptr) {
+	int Terminal::execute() {
+		command_ = command_factory_.create(command_str_, args_);
+		if (command_ == nullptr) {
 			std::cout << "Command not found" << std::endl;
 			return RET_COMMAND_NOT_FOUND;
 		}
-		return command->execute(args_);
+		command_->preprocess(current_working_directory_);
+		// pid_t pid = fork();
+		// add pipe here.
+		return command_->execute();
 	}
 
 	int Terminal::run() {
-		std::string user_name = user_manager_.getUser(user_manager_.getUid()).userName();
-		std::string host_name = hardware_manager_.getHostName();
+		std::string user_name = User::getUserName();
+		std::string host_name = HardwareManager::getHostName();
 
-		while (is_running_) {
+		while (isRunning()) {
 			std::cout << "<SorenShell> ";
-			std::cout << user_name << '@' << host_name << ':' << current_dir_ << '$' << ' ';
-			int ret = readCommand();
-			int res = RET_EXIT_SUCCESS;
-			if (ret == RET_EXIT_SUCCESS) {
-				res = this->execute();
+			std::cout << user_name << '@' << host_name << ':' << current_working_directory_ << '$' << ' ';
+			int ret = RET_EXIT_SUCCESS;
+			switch (readCommand()) {
+				case RET_EXIT_SUCCESS:
+					ret = execute();
+					break;
+				case RET_TERMINATION:
+					ret = RET_TERMINATION;
+					break;
+				case RET_EXIT_FAILURE:
+					std::cout << "Warning! The command fails!" << std::endl;
+					break;
+				default:
+					break;
 			}
-			else if (ret == RET_PLEASE_STOP) {
-				this->stop();
-			}
-			else {
-				std::cout << "Command has not been executed!" << std::endl;
-			}
-
-			if (res == RET_PLEASE_STOP) {
-				stop();
-			}
+			handleReturnCode(ret);
 		}
 		return RET_EXIT_SUCCESS;
 	}
@@ -65,11 +69,11 @@ namespace SorenShell {
 		std::getline(std::cin, command);
 		if (std::cin.eof()) {
 			std::cin.clear();
-			return RET_PLEASE_STOP; //EOF
+			return RET_TERMINATION; //EOF
 		}
 		if (command.size() > MAX_COMMAND_LENGTH) {
-			std::cerr << "command too long" << std::endl;
-			return RET_COMMAND_TOO_LONG;
+			std::cout << "command too long" << std::endl;
+			return RET_EXIT_FAILURE;
 		}
 		parseCommand(command);
 		return RET_EXIT_SUCCESS;
@@ -78,35 +82,38 @@ namespace SorenShell {
 	void Terminal::parseCommand(const std::string &command) {
 		std::stringstream ss(command);
 		bool first = true;
-		command_.clear();
+		command_str_.clear();
 		args_.clear();
 		while (ss.good()) {
 			std::string token;
 			ss >> token;
 			if (first) {
 				first = false;
-				command_ = token;
+				command_str_ = token;
 			}
 			else {
 				args_.push_back(token);
 			}
 		}
-		if (command_ == "ls") {
-			bool found = false;
-			for (auto &arg : args_) {
-				if (arg[0] != '-') {
-					found = true;
-				}
-			}
-			if (!found) {
-				args_.emplace_back(current_dir_);
-			}
+	}
+
+	void Terminal::handleReturnCode(int res) {
+		if (res == RET_TERMINATION) {
+			this->stop();
+		}
+		else if (res == RET_INCORRECT_USAGE) {
+			command_->help();
+		}
+		else if (res == RET_COMMAND_NOT_FOUND) {
+			std::cout << "Command " << command_str_ << " not found" << std::endl;
+		}
+		else if (res == RET_PERMISSION_DENIED) {
+			std::cout << "Command " << command_str_ << " permission denied" << std::endl;
 		}
 	}
 
-	int Terminal::stop() {
+	void Terminal::stop() {
 		is_running_ = false;
-		return RET_EXIT_SUCCESS;
 	}
 
 	bool Terminal::isRunning() const {

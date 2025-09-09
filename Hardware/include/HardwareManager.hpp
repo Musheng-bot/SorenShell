@@ -17,15 +17,15 @@ namespace SorenShell {
 			HardwareManager &operator=(HardwareManager &&) = delete;
 
 			//getter
-			[[nodiscard]] const std::string &getHostName() const;
+			static std::string getHostName();
 
 		private:
 			HardwareManager();
 
-			std::string host_name_;
-			std::string device_type_;
-			std::string manufacturer_;
-			std::string serial_number_;
+			// std::string host_name_;
+			// std::string device_type_;
+			// std::string manufacturer_;
+			// std::string serial_number_;
 
 			static std::string readFile(const std::string& path);
 	};

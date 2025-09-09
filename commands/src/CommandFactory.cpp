@@ -2,33 +2,43 @@
 // Created by musheng on 9/7/25.
 //
 
-#include "../include/CommandFactory.hpp"
+#include "CommandFactory.hpp"
 
 #include <map>
 
 #include "ExitCommand.hpp"
-#include <memory>
-
 #include "EchoCommand.hpp"
 #include "LsCommand.hpp"
 #include "WhoamiCommand.hpp"
 
 namespace SorenShell {
+	template<typename T>
+	std::unique_ptr<T> commandFunc(const std::vector<std::string> &args) {
+		return std::make_unique<T>(args);
+	}
 
-	std::map<std::string, std::shared_ptr<Command>> CommandFactory::commands = {
-		{"exit", std::make_shared<ExitCommand>()},
-		{"echo", std::make_shared<EchoCommand>()},
-		{"whoami", std::make_shared<WhoamiCommand>()},
-		{"ls", std::make_shared<LsCommand>()},
-	};
+	CommandFactory::CommandFactory() {
+		registerCommand("exit", commandFunc<ExitCommand>);
+		registerCommand("echo", commandFunc<EchoCommand>);
+		registerCommand("ls", commandFunc<LsCommand>);
+		registerCommand("whoami", commandFunc<WhoamiCommand>);
+	}
 
-	CommandFactory::CommandFactory() = default;
+	CommandFactory &CommandFactory::getInstance() {
+		static CommandFactory instance;
+		return instance;
+	}
+
 	CommandFactory::~CommandFactory() = default;
 
-	std::shared_ptr<Command> CommandFactory::create(const std::string &command) {
-		if (commands.contains(command)) {
-			return commands[command];
+	std::unique_ptr<Command> CommandFactory::create(const std::string &command, const std::vector<std::string>& args) {
+		if (commands_.contains(command)) {
+			return commands_[command](args);
 		}
 		return nullptr;
+	}
+
+	void CommandFactory::registerCommand(const std::string& command, const Function& function) {
+		commands_[command] = function;
 	}
 } // SorenShell

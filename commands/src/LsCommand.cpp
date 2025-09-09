@@ -5,93 +5,162 @@
 #include "LsCommand.hpp"
 
 #include "Base.hpp"
+#include <pwd.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include <filesystem>
 #include <iostream>
+#include <grp.h>
+#include "User.hpp"
 
 namespace SorenShell {
-	int LsCommand::execute(std::vector<std::string> args) {
-		// if (args.empty()) {
-		// 	std::cout << "Usage: ls <dir_name> [-a] [-l] [-h]\n" << std::endl;
+	void LsCommand::help() {
+		std::cout << "Usage: ls <dir_name> [options]" << std::endl;
+		std::cout << "[Options: ]" << std::endl;
+		std::cout << "  -h, --help: Show this help" << std::endl;
+		std::cout << "  -a, --all: Show all files, including hidden ones" << std::endl;
+		std::cout << "  -l, --list: Show as a list" << std::endl;
+	}
+
+	void LsCommand::showAsList(const std::vector<std::filesystem::directory_entry> &entries) const {
+		std::filesystem::path path(path_);
+		// uintmax_t total_blocks = 0;
+		// for (const auto& entry : std::filesystem::directory_iterator(path)) {
+		// 	if (entry.is_directory()) {
+		// 		total_blocks += 1;
+		// 	}
+		// 	else if (entry.is_regular_file()) {
+		// 		total_blocks += (entry.file_size() + 511) / 512;
+		// 	}
 		// }
-		for (const auto& arg : args) {
-			if (arg[0] == '-') {
-				if (arg == "-a") {
-					all_ = true;
-				}
-				else if (arg == "-l") {
-					list_ = true;
-				}
-				else if (arg == "-h") {
-					help_ = true;
-				}
-				else {
-					std::cout << "Unrecognized option: " << arg << std::endl;
-					help_ = true;
-				}
+		// std::cout << "total: " << total_blocks << '\n';
+		for (const auto& entry : entries) {
+			auto file_name = entry.path().filename().string();
+			if (!file_name.empty() && file_name[0] == '.' && !all_) {
+				continue;
+			}
+			struct stat file_stat{};
+			if (stat(entry.path().string().c_str(), &file_stat) != 0) {
+				std::cout << entry.path() << " file not found." << std::endl;
+				continue;
+			}
+			std::cout <<
+				getPermissionString(entry.status()) << ' ' <<
+				std::setw(4) << std::right << entry.hard_link_count() << ' ' <<
+				std::setw(8) << std::right << User::getUserName(file_stat.st_uid) << ' ' <<
+				std::setw(8) << std::right << getgrgid(file_stat.st_gid)->gr_name << ' ' <<
+				std::setw(8) << std::right << file_stat.st_size << ' ' <<
+				formatTime(entry.last_write_time()) << ' ' <<
+				file_name << ' ' <<
+			'\n';
+		}
+		std::cout << std::flush;
+	}
+
+	void LsCommand::showNormal(const std::vector<std::filesystem::directory_entry> &entries) const {
+		std::filesystem::path path(path_);
+		for (const auto& entry : entries) {
+			auto file_name = entry.path().filename().string();
+			if (!(!file_name.empty() && file_name[0] == '.' && !all_)) {
+				std::cout << file_name << ' ';
+			}
+		}
+		std::cout << std::endl;
+	}
+
+	std::string LsCommand::getPermissionString(std::filesystem::file_status status) {
+		std::string perm;
+
+		// 确定文件类型
+		if (std::filesystem::is_regular_file(status)) perm += '-';
+		else if (std::filesystem::is_directory(status)) perm += 'd';
+		else if (std::filesystem::is_symlink(status)) perm += 'l';
+		else if (std::filesystem::is_character_file(status)) perm += 'c';
+		else if (std::filesystem::is_block_file(status)) perm += 'b';
+		else if (std::filesystem::is_fifo(status)) perm += 'p';
+		else if (std::filesystem::is_socket(status)) perm += 's';
+		else perm += '?';
+
+		// 用户权限
+		auto perms = status.permissions();
+		perm += (perms & std::filesystem::perms::owner_read) != std::filesystem::perms::none ? 'r' : '-';
+		perm += (perms & std::filesystem::perms::owner_write) != std::filesystem::perms::none ? 'w' : '-';
+		perm += (perms & std::filesystem::perms::owner_exec) != std::filesystem::perms::none ? 'x' : '-';
+
+		// 组权限
+		perm += (perms & std::filesystem::perms::group_read) != std::filesystem::perms::none ? 'r' : '-';
+		perm += (perms & std::filesystem::perms::group_write) != std::filesystem::perms::none ? 'w' : '-';
+		perm += (perms & std::filesystem::perms::group_exec) != std::filesystem::perms::none ? 'x' : '-';
+
+		// 其他用户权限
+		perm += (perms & std::filesystem::perms::others_read) != std::filesystem::perms::none ? 'r' : '-';
+		perm += (perms & std::filesystem::perms::others_write) != std::filesystem::perms::none ? 'w' : '-';
+		perm += (perms & std::filesystem::perms::others_exec) != std::filesystem::perms::none ? 'x' : '-';
+
+		return perm;
+	}
+
+	std::string LsCommand::formatTime(const std::filesystem::file_time_type &ft) {
+		// 转换为系统时间
+		auto tt = std::chrono::system_clock::to_time_t(
+			std::chrono::file_clock::to_sys(ft)
+		);
+		std::tm tm = *std::localtime(&tt);
+
+		std::stringstream ss;
+		ss << std::put_time(&tm, "%b %d %H:%M");
+		return ss.str();
+	}
+
+	void LsCommand::preprocess(const std::string &current_path) {
+		path_ = current_path;
+		path_found_ = false;
+		handleOptionalParameters();
+	}
+
+	void LsCommand::handleOptionalParameters() {
+		for (const auto &args : args_) {
+			if (args == "-h" || args == "--help") {
+				help_ = true;
+			}
+			else if (args == "-a" || args == "--all") {
+				all_ = true;
+			}
+			else if (args == "-l" || args == "--list") {
+				list_ = true;
 			}
 			else {
-				if (!dir_name_.empty()) {
-					std::cout << "Too many parameters" << std::endl;
-					help_ = true;
+				if (!path_found_) {
+					path_ = args;
+					path_found_ = true;
 				}
 				else {
-					dir_name_ = arg;
+					std::cerr << "Unknown option: " << args << std::endl;
+					return;
 				}
 			}
 		}
-		int ret;
+	}
+
+	int LsCommand::execute() {
+		std::vector<std::filesystem::directory_entry> directory_entries;
+		directory_entries.emplace_back(path_ + "/.");
+		directory_entries.emplace_back(std::filesystem::path(path_ + "/.."));
+		for (const auto &entry : std::filesystem::directory_iterator(path_)) {
+			directory_entries.push_back(entry);
+		}
 		if (help_) {
-			 ret = helpExecute();
+			help();
 		}
 		else if (list_) {
-			ret = listExecute();
+			showAsList(directory_entries);
 		}
 		else {
-			ret = normalExecute();
+			showNormal(directory_entries);
 		}
-		reset();
-		return ret;
+		return EXIT_SUCCESS;
 	}
 
-	int LsCommand::helpExecute() {
-		std::cout << "Usage: ls <directory_name> [-a] [-l] [-h]" << std::endl;
-		return RET_EXIT_SUCCESS;
-	}
 
-	int LsCommand::normalExecute() {
-		try {
-			if (!std::filesystem::exists(dir_name_)) {
-				std::cout << "Directory does not exist" << std::endl;
-				return RET_EXIT_FAILURE;
-			}
-			if (!std::filesystem::is_directory(dir_name_)) {
-				std::cout << "Target is not a directory" << std::endl;
-				return RET_EXIT_FAILURE;
-			}
 
-			for (const auto& entry : std::filesystem::directory_iterator(dir_name_)) {
-				const auto& path = entry.path();
-				if (!all_ && path.filename().string()[0] == '.') {
-					continue;
-				}
-				std::cout << path.filename().string() << std::endl;
-			}
-			return RET_EXIT_SUCCESS;
-		}
-		catch (const std::exception& e) {
-			std::cout << e.what() << std::endl;
-			return RET_EXCEPTION_HAPPEN;
-		}
-	}
-
-	int LsCommand::listExecute() {
-		return this->normalExecute();
-	}
-
-	void LsCommand::reset() {
-		all_ = false;
-		list_ = false;
-		help_ = false;
-		dir_name_.clear();
-	}
 } // SorenShell

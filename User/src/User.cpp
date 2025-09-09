@@ -42,7 +42,7 @@ namespace SorenShell {
 		return pwd->pw_gid;
 	}
 
-	void User::runTaskAsUser(std::function<void()> task, const std::string& user) {
+	void User::runTaskAsUser(const std::function<void()>& task, const std::string& user) {
 		auto pwd = getpwnam(user.c_str());
 		if (pwd == nullptr) {
 			std::cout << "User " << user << " does not exist" << std::endl;

@@ -9,20 +9,18 @@
 
 namespace SorenShell {
 	class LsCommand final : public Command {
+		DEFINE_COMMAND_CLASS(LsCommand)
 		public:
-			LsCommand() = default;
-			~LsCommand() override = default;
-			int execute(std::vector<std::string> args) override;
+			void showAsList(const std::vector<std::filesystem::directory_entry> &entries) const;
+			void showNormal(const std::vector<std::filesystem::directory_entry> &entries) const;
 		private:
-			bool all_ = false;
 			bool list_ = false;
-			bool help_ = false;
-			std::filesystem::path dir_name_;
+			bool all_ = false;
+			std::string path_;
+			bool path_found_ = false;
 
-			int helpExecute();
-			int normalExecute();
-			int listExecute();
-			void reset();
+			static std::string getPermissionString(std::filesystem::file_status status);
+			static std::string formatTime(const std::filesystem::file_time_type& ft);
 	};
 } // SorenShell
 

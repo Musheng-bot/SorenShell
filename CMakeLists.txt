@@ -35,14 +35,19 @@ add_library(Commands SHARED
 		commands/src/LsCommand.cpp
 		commands/include/LsCommand.hpp
 )
-target_include_directories(Commands PRIVATE include commands/include)
+target_include_directories(Commands PRIVATE
+		include
+		commands/include
+		User/include
+		Hardware/include)
 
 ### Terminal module
 add_library(Terminal SHARED
 	include/Terminal.hpp
 	src/Terminal.cpp
 )
-target_include_directories(Terminal PUBLIC include)
+target_include_directories(Terminal PUBLIC
+		include commands/include Hardware/include User/include)
 target_link_libraries(Terminal PUBLIC HardwareManagement UserManagement Commands)
 
 ### FileSystem module
@@ -62,25 +67,13 @@ target_include_directories(FileSystem PUBLIC include)
 add_executable(SorenShell main.cpp
 		include/Base.hpp
 )
-target_include_directories(SorenShell
-	PRIVATE
-		include commands/include /usr/local/include)
-target_link_libraries(SorenShell PRIVATE
-	Terminal UserManagement HardwareManagement Commands
-)
-
-###
-
-add_executable(test
-		test.cpp
-		include/Base.hpp
-)
-target_include_directories(test PUBLIC include commands/include /usr/local/include)
-target_link_libraries(test
-	PRIVATE
+target_include_directories(SorenShell PUBLIC include commands/include /usr/local/include)
+target_link_libraries(SorenShell
+		PRIVATE
 		UserManagement
 		HardwareManagement
 		Terminal
 		Commands
 )
+
 

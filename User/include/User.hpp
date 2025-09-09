@@ -15,7 +15,7 @@ namespace SorenShell {
 			static std::string getHomeDirectory(uid_t uid);
 			static gid_t getGid(gid_t uid);
 
-			static void runTaskAsUser(std::function<void()> task, const std::string& user);
+			static void runTaskAsUser(const std::function<void()>& task, const std::string& user);
 			static bool setUid(uid_t uid);
 			[[maybe_unused]] static bool changeUserName(uid_t uid, const std::string &userName);
 	};

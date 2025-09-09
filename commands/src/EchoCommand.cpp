@@ -7,11 +7,32 @@
 #include "Base.hpp"
 
 namespace SorenShell {
-	int EchoCommand::execute(std::vector<std::string> args) {
-		for (const auto& arg : args) {
-			std::cout << arg << " ";
+	int EchoCommand::execute() {
+		if (help_) {
+			help();
 		}
-		std::cout << std::endl;
+		else {
+			for (auto &args : args_) {
+				std::cout << args << " ";
+			}
+			std::cout << std::endl;
+		}
 		return RET_EXIT_SUCCESS;
+	}
+
+	void EchoCommand::help() {
+		std::cout << "Usage: echo [args]" << std::endl;
+	}
+
+	void EchoCommand::handleOptionalParameters() {
+		for (const auto &args : args_) {
+			if (args == "--help" || args == "-h") {
+				help_ = true;
+			}
+		}
+	}
+
+	void EchoCommand::preprocess(const std::string &current_path) {
+		handleOptionalParameters();
 	}
 } // SorenShell

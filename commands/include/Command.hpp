@@ -10,10 +10,28 @@
 namespace SorenShell {
 	class Command {
 		public:
-			Command();
+			explicit Command(const std::vector<std::string> &args);
 			virtual ~Command();
-			virtual int execute(std::vector<std::string> args) = 0;
+			virtual int execute() = 0;
+			virtual void preprocess(const std::string &current_path) = 0;
+			virtual void handleOptionalParameters() = 0;
+			virtual void help() = 0;
+
+		protected:
+			std::string command_;
+			std::vector<std::string> args_;
+			bool help_ = false;
 	};
 } // SorenShell
+
+#define DEFINE_COMMAND_CLASS(CLASS_NAME) \
+	public:\
+		explicit CLASS_NAME(const std::vector<std::string> &args) :\
+			Command(args){}\
+		~CLASS_NAME() = default;\
+		int execute() override;\
+		void preprocess(const std::string &current_path) override;\
+		void handleOptionalParameters() override;\
+		void help() override;\
 
 #endif //SORENSHELL_COMMAND_HPP

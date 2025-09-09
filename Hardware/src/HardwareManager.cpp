@@ -14,14 +14,13 @@ namespace SorenShell {
 
 	HardwareManager::~HardwareManager() = default;
 
-	const std::string & HardwareManager::getHostName() const {
-		return host_name_;
+	std::string HardwareManager::getHostName() {
+		auto host_name = readFile("/proc/sys/kernel/hostname");
+		host_name.pop_back();
+		return host_name;
 	}
 
-	HardwareManager::HardwareManager() {
-		host_name_ = readFile("/proc/sys/kernel/hostname");
-		host_name_.pop_back();
-	}
+	HardwareManager::HardwareManager() = default;
 
 	std::string HardwareManager::readFile(const std::string &path) {
 		std::ifstream file;

@@ -8,10 +8,7 @@
 
 namespace SorenShell {
 	class EchoCommand : public Command {
-		public:
-			EchoCommand() = default;
-			~EchoCommand() override = default;
-			int execute(std::vector<std::string> args) override;
+		DEFINE_COMMAND_CLASS(EchoCommand)
 	};
 } // SorenShell
 

@@ -7,16 +7,35 @@
 #include <iostream>
 
 #include "Base.hpp"
-#include "../../User/include/User.hpp"
+#include "User.hpp"
 
 namespace SorenShell {
-	int WhoamiCommand::execute(std::vector<std::string> args) {
-		if (!args.empty()) {
-			std::cout << "Usage: whoami\n To see the current user of the terminal" << std::endl;
-			return RET_COMMAND_INCORRECT_USAGE;
+	void WhoamiCommand::help() {
+		std::cout << "Usage: whoami" << std::endl;
+	}
+
+	void WhoamiCommand::preprocess(const std::string &current_path) {
+		handleOptionalParameters();
+	}
+
+	void WhoamiCommand::handleOptionalParameters() {
+		for (const auto &args : args_) {
+			if (args == "--help" || args == "-h") {
+				help_ = true;
+			}
+			else {
+				help();
+				exit(RET_INCORRECT_USAGE);
+			}
 		}
-		auto& userManager = UserManager::getInstance();
-		std::cout << userManager.getUser(userManager.getUid()).userName() << std::endl;
+	}
+
+	int WhoamiCommand::execute() {
+		std::cout << User::getUserName() << std::endl;
 		return RET_EXIT_SUCCESS;
 	}
+
+
+
+
 } // SorenShell

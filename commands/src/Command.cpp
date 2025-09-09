@@ -7,7 +7,10 @@
 #include <utility>
 
 namespace SorenShell {
-	Command::Command() = default;
+	Command::Command(const std::vector<std::string> &args) :
+		args_(args) {
+
+	}
 
 	Command::~Command() = default;
 } // SorenShell

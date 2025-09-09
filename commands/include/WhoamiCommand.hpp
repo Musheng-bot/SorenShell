@@ -7,12 +7,8 @@
 #include "Command.hpp"
 
 namespace SorenShell {
-	class WhoamiCommand : public Command {
-		public:
-			WhoamiCommand() = default;
-			~WhoamiCommand() override = default;
-			int execute(std::vector<std::string> args) override;
-
+	class WhoamiCommand final : public Command {
+		DEFINE_COMMAND_CLASS(WhoamiCommand)
 	};
 } // SorenShell
 
