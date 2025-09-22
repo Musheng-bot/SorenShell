@@ -5,7 +5,6 @@
 #ifndef SORENSHELL_BASE_HPP
 #define SORENSHELL_BASE_HPP
 
-#include <iostream>
 namespace SorenShell {
 	enum ReturnCode {
 		RET_EXIT_SUCCESS = EXIT_SUCCESS,

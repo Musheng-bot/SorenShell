@@ -46,26 +46,13 @@ target_include_directories(Terminal PUBLIC
 		include commands/include Hardware/include User/include)
 target_link_libraries(Terminal PUBLIC HardwareManagement UserManagement Commands)
 
-### FileSystem module
-add_library(FileSystem SHARED
-		FileSystem/include/File.hpp
-		FileSystem/src/File.cpp
-		FileSystem/include/Directory.hpp
-		FileSystem/src/Directory.cpp
-		FileSystem/src/BaseFile.cpp
-		FileSystem/include/BaseFile.hpp
-		FileSystem/src/FileSystem.cpp
-		FileSystem/include/FileSystem.hpp
-)
-target_include_directories(FileSystem PUBLIC include)
-
 ###
 add_executable(SorenShell main.cpp
 		include/Base.hpp
 )
 target_include_directories(SorenShell PUBLIC include commands/include /usr/local/include)
 target_link_libraries(SorenShell
-		PRIVATE
+	PRIVATE
 		UserManagement
 		HardwareManagement
 		Terminal
